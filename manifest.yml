@@ -1,0 +1,100 @@
+modules:
+  jira:issuePanel:
+    - key: already-decided-panel
+      resource: panel
+      resolver:
+        function: resolver
+      render: native
+      title: Already Decided
+      icon: https://developer.atlassian.com/platform/forge/images/icons/issue-panel-icon.svg
+  confluence:contentAction:
+    - key: already-decided-record-page
+      resource: pageaction
+      resolver:
+        function: resolver
+      render: native
+      title: Record decisions from this page
+  trigger:
+    - key: issue-created
+      function: onIssue
+      events:
+        - avi:jira:created:issue
+    - key: issue-commented
+      function: onComment
+      events:
+        - avi:jira:commented:issue
+  rovo:agent:
+    - key: decision-keeper
+      name: Decision Keeper
+      description: Finds what your team already decided, who decided it and why, before you reopen the question.
+      prompt: >
+        You are Decision Keeper. When a user asks about a choice, a design, or whether to do something,
+        first call find-decisions with their question. If a prior decision matches, quote it with its
+        rationale, owner and source link, and say plainly that it is already decided. If the user states a new
+        decision, call record-decision. Never invent decisions; only report what the actions return.
+      conversationStarters:
+        - Have we already decided which database to use?
+        - Record a decision for this issue
+      actions:
+        - find-decisions
+        - record-decision
+  action:
+    - key: find-decisions
+      name: Find prior decisions
+      function: findAction
+      actionVerb: GET
+      description: Search the team decision ledger for decisions related to a question or topic.
+      inputs:
+        query:
+          title: Question or topic
+          type: string
+          required: true
+          description: The question being asked, e.g. "should we move from Postgres to Mongo"
+    - key: record-decision
+      name: Record a decision
+      function: recordAction
+      actionVerb: CREATE
+      description: Save a new team decision with its rationale to the ledger.
+      inputs:
+        what:
+          title: Decision
+          type: string
+          required: true
+          description: What was decided
+        why:
+          title: Rationale
+          type: string
+          required: false
+          description: Why it was decided
+        source:
+          title: Source link
+          type: string
+          required: false
+          description: Issue key or page URL where it was decided
+  function:
+    - key: resolver
+      handler: index.resolver
+    - key: onIssue
+      handler: index.onIssue
+    - key: onComment
+      handler: index.onComment
+    - key: findAction
+      handler: index.findAction
+    - key: recordAction
+      handler: index.recordAction
+resources:
+  - key: panel
+    path: src/frontend/panel.jsx
+  - key: pageaction
+    path: src/frontend/pageaction.jsx
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work
+    - read:confluence-content.all
+    - read:page:confluence
+    - storage:app
+app:
+  runtime:
+    name: nodejs22.x
+  id: ari:cloud:ecosystem::app/PLACEHOLDER
