@@ -41,6 +41,12 @@ modules:
       actions:
         - find-decisions
         - record-decision
+  rovo:mcp:
+    - key: already-decided-mcp
+      name: Already Decided MCP
+      tools:
+        - find-decisions
+        - record-decision
   action:
     - key: find-decisions
       name: Find prior decisions
